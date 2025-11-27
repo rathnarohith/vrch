@@ -7,9 +7,9 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero py-24 px-6">
         <div className="container mx-auto text-center text-white">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">India's Fastest Intra-City Delivery
-Pick-up hua kya? 
-smoothes<br />
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">India's Fastest Intra-City Delivery Pick-up hua kya? 
+
+#SMOOTH<br />
             Hyperlocal Delivery
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">Lightning-fast package delivery across India. Book a rider in
