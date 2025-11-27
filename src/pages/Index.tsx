@@ -7,14 +7,15 @@ const Index = () => {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero py-24 px-6">
         <div className="container mx-auto text-center text-white">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">India's Fastest
-Intra-City Delivery<br />
+          <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in">India's Fastest Intra-City Delivery
+Pick-up hua kya? 
+smoothes<br />
             Hyperlocal Delivery
           </h1>
           <p className="text-xl md:text-2xl mb-8 text-white/90 max-w-2xl mx-auto">Lightning-fast package delivery across India. Book a rider in
 seconds.</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white shadow-strong text-lg px-8" onClick={() => navigate("/auth")}>Dive</Button>
+            <Button size="lg" className="bg-secondary hover:bg-secondary/90 text-white shadow-strong text-lg px-8" onClick={() => navigate("/auth")}>Order-now!</Button>
             <Button size="lg" variant="outline" className="bg-white/10 border-white text-white hover:bg-white/20 text-lg px-8" onClick={() => navigate("/auth?tab=rider")}>
               Become a Rider
             </Button>
