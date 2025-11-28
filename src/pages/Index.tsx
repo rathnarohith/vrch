@@ -10,7 +10,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent bg-[length:200%_100%] animate-shimmer pointer-events-none" />
         <div className="container mx-auto text-center text-white relative z-10">
           {/* Pulsing glow behind text */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[200px] bg-gradient-radial from-violet-400/40 via-purple-500/20 to-transparent rounded-full blur-3xl animate-pulse-glow pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[250px] bg-gradient-radial from-violet-400/60 via-purple-500/40 to-transparent rounded-full blur-3xl animate-pulse-glow pointer-events-none" />
           <h1 className="relative text-5xl md:text-6xl font-bold mb-6 animate-fade-in text-primary-foreground">India's Fastest Intra-City Delivery
  Pick-up hua kya?#smooth
 ​<br />
