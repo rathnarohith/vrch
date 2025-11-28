@@ -106,12 +106,12 @@ export default {
 			},
 			'pulse-glow': {
 				'0%, 100%': {
-					opacity: '0.4',
-					transform: 'scale(1)'
+					opacity: '0.3',
+					transform: 'scale(0.9)'
 				},
 				'50%': {
-					opacity: '0.7',
-					transform: 'scale(1.05)'
+					opacity: '0.9',
+					transform: 'scale(1.2)'
 				}
 			}
 		},
