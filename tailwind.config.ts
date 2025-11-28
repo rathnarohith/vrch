@@ -64,11 +64,12 @@ export default {
   			xl: 'var(--shadow-xl)',
   			'2xl': 'var(--shadow-2xl)'
   		},
-  		backgroundImage: {
-  			'gradient-primary': 'var(--gradient-primary)',
-  			'gradient-secondary': 'var(--gradient-secondary)',
-  			'gradient-hero': 'var(--gradient-hero)'
-  		},
+		backgroundImage: {
+			'gradient-primary': 'var(--gradient-primary)',
+			'gradient-secondary': 'var(--gradient-secondary)',
+			'gradient-hero': 'var(--gradient-hero)',
+			'gradient-radial': 'radial-gradient(ellipse at center, var(--tw-gradient-stops))'
+		},
   		transitionProperty: {
   			base: 'var(--transition-base)',
   			smooth: 'var(--transition-smooth)'
@@ -102,12 +103,23 @@ export default {
 				'100%': {
 					backgroundPosition: '200% 0'
 				}
+			},
+			'pulse-glow': {
+				'0%, 100%': {
+					opacity: '0.4',
+					transform: 'scale(1)'
+				},
+				'50%': {
+					opacity: '0.7',
+					transform: 'scale(1.05)'
+				}
 			}
 		},
 		animation: {
 			'accordion-down': 'accordion-down 0.2s ease-out',
 			'accordion-up': 'accordion-up 0.2s ease-out',
-			'shimmer': 'shimmer 8s ease-in-out infinite'
+			'shimmer': 'shimmer 8s ease-in-out infinite',
+			'pulse-glow': 'pulse-glow 3s ease-in-out infinite'
 		},
   		fontFamily: {
   			sans: [
