@@ -6,7 +6,9 @@ const Index = () => {
   return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-hero py-24 px-6">
-        <div className="container mx-auto text-center text-white">
+        {/* Shimmer overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent bg-[length:200%_100%] animate-shimmer pointer-events-none" />
+        <div className="container mx-auto text-center text-white relative z-10">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 animate-fade-in text-primary-foreground">India's Fastest Intra-City Delivery
  Pick-up hua kya?#smooth
 ​<br />
