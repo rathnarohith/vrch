@@ -30,9 +30,7 @@ seconds.</p>
       {/* Features Section */}
       <section className="py-20 px-6">
         <div className="container mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">
-            Why Choose Us?
-          </h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Why VRCH?</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <FeatureCard icon={<Zap className="w-12 h-12 text-primary" />} title="Lightning Fast" description="Get your package delivered in minutes, not hours" />
             <FeatureCard icon={<Package className="w-12 h-12 text-primary" />} title="Safe & Secure" description="All packages handled with utmost care" />
