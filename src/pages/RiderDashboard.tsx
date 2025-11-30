@@ -5,8 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { LogOut, Package, TrendingUp, MapPin } from "lucide-react";
+import { LogOut, Package, TrendingUp, MapPin, Quote } from "lucide-react";
 import { toast } from "sonner";
+
+const ridingQuotes = [
+  "The road is calling. Let's deliver excellence!",
+  "Every delivery is a promise kept. Ride safe!",
+  "Your wheels, their smiles. Keep rolling!",
+  "Speed with safety, service with a smile.",
+  "The best riders deliver more than packages - they deliver trust.",
+];
 
 const RiderDashboard = () => {
   const navigate = useNavigate();
@@ -15,6 +23,7 @@ const RiderDashboard = () => {
   const [activeOrder, setActiveOrder] = useState<any>(null);
   const [riderProfile, setRiderProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [quote] = useState(() => ridingQuotes[Math.floor(Math.random() * ridingQuotes.length)]);
 
   useEffect(() => {
     checkAuth();
@@ -143,6 +152,16 @@ const RiderDashboard = () => {
       </header>
 
       <main className="container mx-auto px-6 py-8">
+        {/* Riding Quote */}
+        <Card className="mb-8 bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-3">
+              <Quote className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+              <p className="text-lg font-medium text-foreground italic">{quote}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Status Card */}
         <Card className="mb-8 bg-gradient-primary text-white">
           <CardContent className="py-6">

@@ -4,14 +4,23 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Plus, LogOut, MapPin } from "lucide-react";
+import { Package, Plus, LogOut, MapPin, XCircle, Quote } from "lucide-react";
 import { toast } from "sonner";
+
+const motivationalQuotes = [
+  "Great things take time. Your order is on its way!",
+  "Every journey begins with a single step. Track yours!",
+  "Excellence in delivery, every single time.",
+  "Your time is valuable. We deliver fast!",
+  "Sit back and relax. We've got this covered.",
+];
 
 const CustomerDashboard = () => {
   const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [quote] = useState(() => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
 
   useEffect(() => {
     checkAuth();
@@ -48,6 +57,22 @@ const CustomerDashboard = () => {
     navigate("/");
   };
 
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ order_status: "cancelled" })
+        .eq("id", orderId)
+        .eq("order_status", "pending");
+
+      if (error) throw error;
+      toast.success("Order cancelled successfully");
+      fetchOrders();
+    } catch (error: any) {
+      toast.error("Failed to cancel order");
+    }
+  };
+
   const getStatusColor = (status: string) => {
     const colors: any = {
       pending: "bg-secondary",
@@ -77,6 +102,16 @@ const CustomerDashboard = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-6 py-8">
+        {/* Motivational Quote */}
+        <Card className="mb-8 bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-3">
+              <Quote className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+              <p className="text-lg font-medium text-foreground italic">{quote}</p>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="flex justify-between items-center mb-8">
           <div>
             <h2 className="text-3xl font-bold mb-2">My Orders</h2>
@@ -144,14 +179,26 @@ const CustomerDashboard = () => {
                         <p className="text-sm text-muted-foreground">Total Fare</p>
                         <p className="text-2xl font-bold text-primary">₹{order.total_fare}</p>
                       </div>
-                      {order.order_status !== "delivered" && order.order_status !== "cancelled" && (
-                        <Button
-                          variant="outline"
-                          onClick={() => navigate(`/customer/track/${order.id}`)}
-                        >
-                          Track Order
-                        </Button>
-                      )}
+                      <div className="flex gap-2">
+                        {order.order_status === "pending" && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancelOrder(order.id)}
+                          >
+                            <XCircle className="w-4 h-4 mr-2" />
+                            Cancel
+                          </Button>
+                        )}
+                        {order.order_status !== "delivered" && order.order_status !== "cancelled" && (
+                          <Button
+                            variant="outline"
+                            onClick={() => navigate(`/customer/track/${order.id}`)}
+                          >
+                            Track Order
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </CardContent>

@@ -115,7 +115,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl">Welcome</CardTitle>
-          <CardDescription>Sign in or create your account</CardDescription>
+          <CardDescription>Login or create your account</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -174,7 +174,7 @@ const CustomerAuthForm = ({ onSignUp, onSignIn, loading }: any) => {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSignUp ? "Sign Up" : "Sign In"}
+          {isSignUp ? "Sign Up" : "Login"}
         </Button>
       </form>
       <Button
@@ -182,7 +182,7 @@ const CustomerAuthForm = ({ onSignUp, onSignIn, loading }: any) => {
         className="w-full"
         onClick={() => setIsSignUp(!isSignUp)}
       >
-        {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+        {isSignUp ? "Already signed up? Login!!" : "Don't have an account? Sign Up"}
       </Button>
     </div>
   );
@@ -228,7 +228,7 @@ const RiderAuthForm = ({ onSignUp, onSignIn, loading }: any) => {
         </div>
         <Button type="submit" className="w-full" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {isSignUp ? "Sign Up as Rider" : "Sign In"}
+          {isSignUp ? "Sign Up as Rider" : "Login"}
         </Button>
       </form>
       <Button
@@ -236,7 +236,7 @@ const RiderAuthForm = ({ onSignUp, onSignIn, loading }: any) => {
         className="w-full"
         onClick={() => setIsSignUp(!isSignUp)}
       >
-        {isSignUp ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
+        {isSignUp ? "Already signed up? Login!!" : "Don't have an account? Sign Up"}
       </Button>
     </div>
   );
