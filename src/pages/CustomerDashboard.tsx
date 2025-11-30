@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Plus, LogOut, MapPin, XCircle, Quote } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Package, Plus, LogOut, MapPin, XCircle, Quote, Search, Filter } from "lucide-react";
 import { toast } from "sonner";
 
 const motivationalQuotes = [
@@ -21,6 +23,9 @@ const CustomerDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [quote] = useState(() => motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("newest");
 
   useEffect(() => {
     checkAuth();
@@ -85,6 +90,37 @@ const CustomerDashboard = () => {
     return colors[status] || "bg-muted";
   };
 
+  // Filter and sort orders
+  const filteredOrders = orders
+    .filter((order) => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch =
+        order.id.toLowerCase().includes(searchLower) ||
+        order.pickup_address.toLowerCase().includes(searchLower) ||
+        order.drop_address.toLowerCase().includes(searchLower) ||
+        order.order_status.toLowerCase().includes(searchLower);
+
+      // Status filter
+      const matchesStatus = statusFilter === "all" || order.order_status === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "newest":
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case "oldest":
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case "fare-high":
+          return b.total_fare - a.total_fare;
+        case "fare-low":
+          return a.total_fare - b.total_fare;
+        default:
+          return 0;
+      }
+    });
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -112,19 +148,97 @@ const CustomerDashboard = () => {
           </CardContent>
         </Card>
 
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h2 className="text-3xl font-bold mb-2">My Orders</h2>
-            <p className="text-muted-foreground">Track and manage your deliveries</p>
+        <div className="flex flex-col gap-6 mb-8">
+          <div className="flex justify-between items-center">
+            <div>
+              <h2 className="text-3xl font-bold mb-2">My Orders</h2>
+              <p className="text-muted-foreground">Track and manage your deliveries</p>
+            </div>
+            <Button
+              size="lg"
+              className="bg-secondary hover:bg-secondary/90"
+              onClick={() => navigate("/customer/new-order")}
+            >
+              <Plus className="w-5 h-5 mr-2" />
+              New Order
+            </Button>
           </div>
-          <Button
-            size="lg"
-            className="bg-secondary hover:bg-secondary/90"
-            onClick={() => navigate("/customer/new-order")}
-          >
-            <Plus className="w-5 h-5 mr-2" />
-            New Order
-          </Button>
+
+          {/* Search and Filters */}
+          {orders.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Filter className="w-5 h-5" />
+                  Search & Filter Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid md:grid-cols-3 gap-4">
+                  {/* Search */}
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search orders..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+
+                  {/* Status Filter */}
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="rider-assigned">Rider Assigned</SelectItem>
+                      <SelectItem value="picked-up">Picked Up</SelectItem>
+                      <SelectItem value="in-transit">In Transit</SelectItem>
+                      <SelectItem value="delivered">Delivered</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Sort */}
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="newest">Newest First</SelectItem>
+                      <SelectItem value="oldest">Oldest First</SelectItem>
+                      <SelectItem value="fare-high">Fare: High to Low</SelectItem>
+                      <SelectItem value="fare-low">Fare: Low to High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Active Filters Summary */}
+                {(searchQuery || statusFilter !== "all") && (
+                  <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Showing {filteredOrders.length} of {orders.length} orders
+                    </p>
+                    {(searchQuery || statusFilter !== "all") && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSearchQuery("");
+                          setStatusFilter("all");
+                        }}
+                      >
+                        Clear filters
+                      </Button>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {loading ? (
@@ -141,9 +255,26 @@ const CustomerDashboard = () => {
               </Button>
             </CardContent>
           </Card>
+        ) : filteredOrders.length === 0 ? (
+          <Card>
+            <CardContent className="py-12 text-center">
+              <Package className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">No orders found</h3>
+              <p className="text-muted-foreground mb-6">Try adjusting your search or filters</p>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchQuery("");
+                  setStatusFilter("all");
+                }}
+              >
+                Clear filters
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid gap-6">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <Card key={order.id} className="hover:shadow-medium transition-shadow">
                 <CardHeader>
                   <div className="flex justify-between items-start">
