@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { ArrowLeft, MapPin, Package } from "lucide-react";
+import { ArrowLeft, MapPin, Package, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,6 +21,7 @@ const NewOrder = () => {
     dropLng: 78.3489,
     packageWeight: "",
     vehicleType: "bike",
+    paymentMethod: "cash_on_delivery",
   });
   const [fareEstimate, setFareEstimate] = useState<any>(null);
 
@@ -58,6 +59,13 @@ const NewOrder = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Simulate online payment if selected
+      if (formData.paymentMethod === "online") {
+        toast.info("Processing payment...");
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate payment processing
+        toast.success("Payment successful!");
+      }
+
       const { error } = await supabase.from("orders").insert({
         customer_id: user.id,
         pickup_address: formData.pickupAddress,
@@ -70,7 +78,8 @@ const NewOrder = () => {
         vehicle_type: formData.vehicleType,
         distance: fareEstimate.distance,
         total_fare: fareEstimate.total,
-        payment_status: "completed", // Mock payment completion
+        payment_method: formData.paymentMethod,
+        payment_status: formData.paymentMethod === "online" ? "completed" : "pending",
         order_status: "pending",
       });
 
@@ -215,13 +224,44 @@ const NewOrder = () => {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CreditCard className="w-5 h-5 text-primary" />
+                Payment Method
+              </CardTitle>
+              <CardDescription>Choose how you want to pay for this delivery</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={formData.paymentMethod}
+                onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+              >
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                  <RadioGroupItem value="cash_on_delivery" id="cod" />
+                  <Label htmlFor="cod" className="font-normal flex-1 cursor-pointer">
+                    <div className="font-medium">Cash on Delivery</div>
+                    <div className="text-sm text-muted-foreground">Pay when order is delivered</div>
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
+                  <RadioGroupItem value="online" id="online" />
+                  <Label htmlFor="online" className="font-normal flex-1 cursor-pointer">
+                    <div className="font-medium">Pay Now (Online)</div>
+                    <div className="text-sm text-muted-foreground">Instant payment - simulated for demo</div>
+                  </Label>
+                </div>
+              </RadioGroup>
+            </CardContent>
+          </Card>
+
           <Button
             type="submit"
             className="w-full bg-secondary hover:bg-secondary/90"
             size="lg"
             disabled={loading || !fareEstimate}
           >
-            {loading ? "Creating Order..." : "Book Now"}
+            {loading ? "Creating Order..." : formData.paymentMethod === "online" ? "Pay & Book Now" : "Book Now"}
           </Button>
         </form>
       </main>

@@ -26,6 +26,8 @@ export type Database = {
           order_status: string | null
           package_weight: number
           payment_id: string | null
+          payment_intent_id: string | null
+          payment_method: string | null
           payment_status: string | null
           pickup_address: string
           pickup_lat: number
@@ -46,6 +48,8 @@ export type Database = {
           order_status?: string | null
           package_weight: number
           payment_id?: string | null
+          payment_intent_id?: string | null
+          payment_method?: string | null
           payment_status?: string | null
           pickup_address: string
           pickup_lat: number
@@ -66,6 +70,8 @@ export type Database = {
           order_status?: string | null
           package_weight?: number
           payment_id?: string | null
+          payment_intent_id?: string | null
+          payment_method?: string | null
           payment_status?: string | null
           pickup_address?: string
           pickup_lat?: number
