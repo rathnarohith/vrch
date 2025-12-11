@@ -6,6 +6,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Package, Plus, LogOut, MapPin, XCircle, Quote, Search, Filter, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
 import { useOrderNotifications } from "@/hooks/use-notifications";
@@ -27,6 +37,8 @@ const CustomerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
 
   const { permission, requestPermission, isSupported } = useOrderNotifications({
     userId: user?.id || null,
@@ -68,12 +80,19 @@ const CustomerDashboard = () => {
     navigate("/");
   };
 
-  const handleCancelOrder = async (orderId: string) => {
+  const openCancelDialog = (orderId: string) => {
+    setOrderToCancel(orderId);
+    setCancelDialogOpen(true);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!orderToCancel) return;
+    
     try {
       const { error } = await supabase
         .from("orders")
         .update({ order_status: "cancelled" })
-        .eq("id", orderId)
+        .eq("id", orderToCancel)
         .eq("order_status", "pending");
 
       if (error) throw error;
@@ -81,6 +100,9 @@ const CustomerDashboard = () => {
       fetchOrders();
     } catch (error: any) {
       toast.error("Failed to cancel order");
+    } finally {
+      setCancelDialogOpen(false);
+      setOrderToCancel(null);
     }
   };
 
@@ -335,7 +357,7 @@ const CustomerDashboard = () => {
                           <Button
                             variant="destructive"
                             size="sm"
-                            onClick={() => handleCancelOrder(order.id)}
+                            onClick={() => openCancelDialog(order.id)}
                           >
                             <XCircle className="w-4 h-4 mr-2" />
                             Cancel
@@ -358,6 +380,27 @@ const CustomerDashboard = () => {
           </div>
         )}
       </main>
+
+      {/* Cancel Order Confirmation Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this order? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No, keep order</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleCancelOrder}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Yes, cancel order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
