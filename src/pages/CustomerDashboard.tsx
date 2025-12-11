@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Package, Plus, LogOut, MapPin, XCircle, Quote, Search, Filter } from "lucide-react";
+import { Package, Plus, LogOut, MapPin, XCircle, Quote, Search, Filter, Bell, BellOff } from "lucide-react";
 import { toast } from "sonner";
+import { useOrderNotifications } from "@/hooks/use-notifications";
 
 const motivationalQuotes = [
   "Great things take time. Your order is on its way!",
@@ -26,6 +27,11 @@ const CustomerDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+
+  const { permission, requestPermission, isSupported } = useOrderNotifications({
+    userId: user?.id || null,
+    enabled: true,
+  });
 
   useEffect(() => {
     checkAuth();
@@ -128,6 +134,20 @@ const CustomerDashboard = () => {
         <div className="container mx-auto px-6 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-primary">QuickDeliver</h1>
           <div className="flex gap-4">
+            {isSupported && (
+              <Button
+                variant={permission === 'granted' ? 'default' : 'outline'}
+                onClick={requestPermission}
+                title={permission === 'granted' ? 'Notifications enabled' : 'Enable notifications'}
+              >
+                {permission === 'granted' ? (
+                  <Bell className="w-4 h-4 mr-2" />
+                ) : (
+                  <BellOff className="w-4 h-4 mr-2" />
+                )}
+                {permission === 'granted' ? 'Notifications On' : 'Enable Notifications'}
+              </Button>
+            )}
             <Button variant="outline" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out
