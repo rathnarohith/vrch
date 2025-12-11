@@ -39,6 +39,7 @@ const CustomerDashboard = () => {
   const [sortBy, setSortBy] = useState<string>("newest");
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [orderToCancel, setOrderToCancel] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState<string>("");
 
   const { permission, requestPermission, isSupported } = useOrderNotifications({
     userId: user?.id || null,
@@ -82,16 +83,20 @@ const CustomerDashboard = () => {
 
   const openCancelDialog = (orderId: string) => {
     setOrderToCancel(orderId);
+    setCancelReason("");
     setCancelDialogOpen(true);
   };
 
   const handleCancelOrder = async () => {
-    if (!orderToCancel) return;
+    if (!orderToCancel || !cancelReason) return;
     
     try {
       const { error } = await supabase
         .from("orders")
-        .update({ order_status: "cancelled" })
+        .update({ 
+          order_status: "cancelled",
+          cancellation_reason: cancelReason 
+        })
         .eq("id", orderToCancel)
         .eq("order_status", "pending");
 
@@ -103,6 +108,7 @@ const CustomerDashboard = () => {
     } finally {
       setCancelDialogOpen(false);
       setOrderToCancel(null);
+      setCancelReason("");
     }
   };
 
@@ -387,13 +393,30 @@ const CustomerDashboard = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Cancel Order?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to cancel this order? This action cannot be undone.
+              Please select a reason for cancellation. This helps us improve our service.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="py-4">
+            <Select value={cancelReason} onValueChange={setCancelReason}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a reason" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="changed_mind">Changed my mind</SelectItem>
+                <SelectItem value="found_alternative">Found alternative delivery</SelectItem>
+                <SelectItem value="wrong_address">Entered wrong address</SelectItem>
+                <SelectItem value="price_too_high">Price too high</SelectItem>
+                <SelectItem value="taking_too_long">Taking too long to find rider</SelectItem>
+                <SelectItem value="ordered_by_mistake">Ordered by mistake</SelectItem>
+                <SelectItem value="other">Other reason</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <AlertDialogFooter>
             <AlertDialogCancel>No, keep order</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleCancelOrder}
+              disabled={!cancelReason}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Yes, cancel order

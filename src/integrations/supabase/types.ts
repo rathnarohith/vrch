@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       orders: {
         Row: {
+          cancellation_reason: string | null
           created_at: string | null
           customer_id: string
           distance: number
@@ -38,6 +39,7 @@ export type Database = {
           vehicle_type: string
         }
         Insert: {
+          cancellation_reason?: string | null
           created_at?: string | null
           customer_id: string
           distance: number
@@ -60,6 +62,7 @@ export type Database = {
           vehicle_type: string
         }
         Update: {
+          cancellation_reason?: string | null
           created_at?: string | null
           customer_id?: string
           distance?: number
