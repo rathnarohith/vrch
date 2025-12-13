@@ -140,7 +140,17 @@ const NewOrder = () => {
   };
 
   const updateField = (field: string, value: string) => {
-    setFormData({ ...formData, [field]: value });
+    let updatedData = { ...formData, [field]: value };
+    
+    // Auto-switch vehicle type based on weight
+    if (field === "packageWeight") {
+      const weight = parseFloat(value) || 0;
+      if (weight > 10) {
+        updatedData.vehicleType = "trolley";
+      }
+    }
+    
+    setFormData(updatedData);
     // Clear error for this field when user starts typing
     if (errors[field]) {
       setErrors({ ...errors, [field]: "" });
@@ -227,8 +237,8 @@ const NewOrder = () => {
                   type="number"
                   step="0.1"
                   min="0.1"
-                  max="500"
-                  placeholder="Enter weight (0.1 - 500 kg)"
+                  max="25"
+                  placeholder="Enter weight (0.1 - 25 kg)"
                   value={formData.packageWeight}
                   onChange={(e) => updateField("packageWeight", e.target.value)}
                   className={errors.packageWeight ? "border-destructive" : ""}
@@ -242,18 +252,25 @@ const NewOrder = () => {
                 <Label>Vehicle Type</Label>
                 <RadioGroup
                   value={formData.vehicleType}
-                  onValueChange={(value) => updateField("vehicleType", value)}
+                  onValueChange={(value) => {
+                    const weight = parseFloat(formData.packageWeight) || 0;
+                    // Prevent switching to bike if weight > 10kg
+                    if (value === "bike" && weight > 10) {
+                      return;
+                    }
+                    updateField("vehicleType", value);
+                  }}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="bike" id="bike" />
+                  <div className={`flex items-center space-x-2 ${parseFloat(formData.packageWeight) > 10 ? "opacity-50" : ""}`}>
+                    <RadioGroupItem value="bike" id="bike" disabled={parseFloat(formData.packageWeight) > 10} />
                     <Label htmlFor="bike" className="font-normal">
-                      Bike (up to 15kg)
+                      Bike (up to 10kg)
                     </Label>
                   </div>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="trolley" id="trolley" />
                     <Label htmlFor="trolley" className="font-normal">
-                      Trolley (15kg+)
+                      Trolley (10-25kg)
                     </Label>
                   </div>
                 </RadioGroup>
