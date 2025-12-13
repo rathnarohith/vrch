@@ -29,6 +29,47 @@ const RiderDashboard = () => {
     checkAuth();
     fetchRiderProfile();
     fetchOrders();
+
+    // Subscribe to order cancellations in real-time
+    const setupRealtimeSubscription = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const channel = supabase
+        .channel('order-cancellations')
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'orders',
+            filter: `rider_id=eq.${user.id}`
+          },
+          (payload) => {
+            const newOrder = payload.new as any;
+            if (newOrder.order_status === 'cancelled') {
+              toast.error(`Order cancelled by customer`, {
+                description: newOrder.cancellation_reason 
+                  ? `Reason: ${newOrder.cancellation_reason.replace(/_/g, ' ')}`
+                  : 'The customer has cancelled this order.',
+                duration: 6000
+              });
+              // Refresh orders list
+              fetchOrders();
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    };
+
+    const cleanup = setupRealtimeSubscription();
+    return () => {
+      cleanup.then(fn => fn?.());
+    };
   }, []);
 
   const checkAuth = async () => {
