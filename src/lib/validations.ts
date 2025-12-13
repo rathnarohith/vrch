@@ -52,8 +52,8 @@ export const orderSchema = z.object({
   packageWeight: z
     .number({ invalid_type_error: "Please enter a valid weight" })
     .min(0.1, { message: "Package weight must be at least 0.1 kg" })
-    .max(500, { message: "Package weight cannot exceed 500 kg" }),
-  vehicleType: z.enum(["bike", "trolley"], { 
+    .max(25, { message: "Package weight cannot exceed 25 kg" }),
+  vehicleType: z.enum(["bike", "trolley"], {
     errorMap: () => ({ message: "Please select a vehicle type" }) 
   }),
   paymentMethod: z.enum(["cash_on_delivery", "online"], { 
