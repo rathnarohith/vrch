@@ -8,10 +8,17 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ArrowLeft, MapPin, Package, CreditCard } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { orderSchema } from "@/lib/validations";
+import { z } from "zod";
+
+interface FormErrors {
+  [key: string]: string;
+}
 
 const NewOrder = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<FormErrors>({});
   const [formData, setFormData] = useState({
     pickupAddress: "",
     pickupLat: 17.385,
@@ -25,7 +32,37 @@ const NewOrder = () => {
   });
   const [fareEstimate, setFareEstimate] = useState<any>(null);
 
+  const validateForm = () => {
+    try {
+      orderSchema.parse({
+        pickupAddress: formData.pickupAddress.trim(),
+        dropAddress: formData.dropAddress.trim(),
+        packageWeight: parseFloat(formData.packageWeight) || 0,
+        vehicleType: formData.vehicleType,
+        paymentMethod: formData.paymentMethod,
+      });
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: FormErrors = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            newErrors[err.path[0] as string] = err.message;
+          }
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
   const calculateFare = () => {
+    if (!validateForm()) {
+      toast.error("Please fix the errors before calculating fare");
+      return;
+    }
+
     const weight = parseFloat(formData.packageWeight);
     const distance = 5; // Mock distance for now
     
@@ -33,11 +70,9 @@ const NewOrder = () => {
     let distanceCost = 0;
 
     if (formData.vehicleType === "bike") {
-      // Bike: ₹5 first 5kg + ₹3/kg, ₹20 first 5km + ₹15/km
       weightCost = weight <= 5 ? 5 : 5 + (weight - 5) * 3;
       distanceCost = distance <= 5 ? 20 : 20 + (distance - 5) * 15;
     } else {
-      // Trolley: ₹15 first 10kg + ₹8/kg, ₹20/km
       weightCost = weight <= 10 ? 15 : 15 + (weight - 10) * 8;
       distanceCost = distance * 20;
     }
@@ -53,25 +88,35 @@ const NewOrder = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast.error("Please fix the form errors");
+      return;
+    }
+
+    if (!fareEstimate) {
+      toast.error("Please calculate fare first");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Simulate online payment if selected
       if (formData.paymentMethod === "online") {
         toast.info("Processing payment...");
-        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate payment processing
+        await new Promise(resolve => setTimeout(resolve, 1500));
         toast.success("Payment successful!");
       }
 
       const { error } = await supabase.from("orders").insert({
         customer_id: user.id,
-        pickup_address: formData.pickupAddress,
+        pickup_address: formData.pickupAddress.trim(),
         pickup_lat: formData.pickupLat,
         pickup_lng: formData.pickupLng,
-        drop_address: formData.dropAddress,
+        drop_address: formData.dropAddress.trim(),
         drop_lat: formData.dropLat,
         drop_lng: formData.dropLng,
         package_weight: parseFloat(formData.packageWeight),
@@ -92,6 +137,16 @@ const NewOrder = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const updateField = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    // Clear error for this field when user starts typing
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: "" });
+    }
+    // Reset fare estimate when form changes
+    setFareEstimate(null);
   };
 
   return (
@@ -123,9 +178,12 @@ const NewOrder = () => {
                   id="pickupAddress"
                   placeholder="Enter pickup address in Hyderabad"
                   value={formData.pickupAddress}
-                  onChange={(e) => setFormData({ ...formData, pickupAddress: e.target.value })}
-                  required
+                  onChange={(e) => updateField("pickupAddress", e.target.value)}
+                  className={errors.pickupAddress ? "border-destructive" : ""}
                 />
+                {errors.pickupAddress && (
+                  <p className="text-sm text-destructive">{errors.pickupAddress}</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -144,9 +202,12 @@ const NewOrder = () => {
                   id="dropAddress"
                   placeholder="Enter drop address in Hyderabad"
                   value={formData.dropAddress}
-                  onChange={(e) => setFormData({ ...formData, dropAddress: e.target.value })}
-                  required
+                  onChange={(e) => updateField("dropAddress", e.target.value)}
+                  className={errors.dropAddress ? "border-destructive" : ""}
                 />
+                {errors.dropAddress && (
+                  <p className="text-sm text-destructive">{errors.dropAddress}</p>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -166,18 +227,22 @@ const NewOrder = () => {
                   type="number"
                   step="0.1"
                   min="0.1"
-                  placeholder="Enter weight"
+                  max="500"
+                  placeholder="Enter weight (0.1 - 500 kg)"
                   value={formData.packageWeight}
-                  onChange={(e) => setFormData({ ...formData, packageWeight: e.target.value })}
-                  required
+                  onChange={(e) => updateField("packageWeight", e.target.value)}
+                  className={errors.packageWeight ? "border-destructive" : ""}
                 />
+                {errors.packageWeight && (
+                  <p className="text-sm text-destructive">{errors.packageWeight}</p>
+                )}
               </div>
 
               <div className="space-y-2">
                 <Label>Vehicle Type</Label>
                 <RadioGroup
                   value={formData.vehicleType}
-                  onValueChange={(value) => setFormData({ ...formData, vehicleType: value })}
+                  onValueChange={(value) => updateField("vehicleType", value)}
                 >
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="bike" id="bike" />
@@ -192,6 +257,9 @@ const NewOrder = () => {
                     </Label>
                   </div>
                 </RadioGroup>
+                {errors.vehicleType && (
+                  <p className="text-sm text-destructive">{errors.vehicleType}</p>
+                )}
               </div>
 
               {formData.packageWeight && (
@@ -235,7 +303,7 @@ const NewOrder = () => {
             <CardContent>
               <RadioGroup
                 value={formData.paymentMethod}
-                onValueChange={(value) => setFormData({ ...formData, paymentMethod: value })}
+                onValueChange={(value) => updateField("paymentMethod", value)}
               >
                 <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-accent/50 transition-colors">
                   <RadioGroupItem value="cash_on_delivery" id="cod" />
@@ -252,6 +320,9 @@ const NewOrder = () => {
                   </Label>
                 </div>
               </RadioGroup>
+              {errors.paymentMethod && (
+                <p className="text-sm text-destructive mt-2">{errors.paymentMethod}</p>
+              )}
             </CardContent>
           </Card>
 
