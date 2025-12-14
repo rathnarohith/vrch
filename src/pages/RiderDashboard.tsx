@@ -220,25 +220,6 @@ const RiderDashboard = () => {
     }
   };
 
-  const reclaimCancelledOrder = async (order: any) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          order_status: "pending",
-          rider_id: null,
-          cancellation_reason: null
-        })
-        .eq("id", order.id);
-
-      if (error) throw error;
-      toast.success("Order released back to available orders!");
-      fetchOrders();
-    } catch (error: any) {
-      toast.error("Failed to release order");
-    }
-  };
-
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     navigate("/");
@@ -428,7 +409,7 @@ const RiderDashboard = () => {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 mb-4">
+                      <div className="space-y-2">
                         <p className="text-sm">
                           <span className="font-medium">Pickup:</span> {order.pickup_address}
                         </p>
@@ -440,14 +421,10 @@ const RiderDashboard = () => {
                             <span className="font-medium">Reason:</span> {order.cancellation_reason.replace(/_/g, ' ')}
                           </p>
                         )}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Cancelled on {new Date(order.updated_at).toLocaleDateString()}
+                        </p>
                       </div>
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => reclaimCancelledOrder(order)}
-                      >
-                        Release Back to Available
-                      </Button>
                     </CardContent>
                   </Card>
                 ))}

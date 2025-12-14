@@ -97,8 +97,7 @@ const CustomerDashboard = () => {
           order_status: "cancelled",
           cancellation_reason: cancelReason 
         })
-        .eq("id", orderToCancel)
-        .eq("order_status", "pending");
+        .eq("id", orderToCancel);
 
       if (error) throw error;
       toast.success("Order cancelled successfully");
@@ -359,7 +358,7 @@ const CustomerDashboard = () => {
                         <p className="text-2xl font-bold text-primary">₹{order.total_fare}</p>
                       </div>
                       <div className="flex gap-2">
-                        {order.order_status === "pending" && (
+                        {(order.order_status === "pending" || order.order_status === "rider-assigned") && (
                           <Button
                             variant="destructive"
                             size="sm"
