@@ -20,9 +20,11 @@ const RiderDashboard = () => {
   const navigate = useNavigate();
   const [isOnline, setIsOnline] = useState(false);
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
+  const [cancelledOrders, setCancelledOrders] = useState<any[]>([]);
   const [activeOrder, setActiveOrder] = useState<any>(null);
   const [riderProfile, setRiderProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showCancelled, setShowCancelled] = useState(false);
   const [quote] = useState(() => ridingQuotes[Math.floor(Math.random() * ridingQuotes.length)]);
 
   useEffect(() => {
@@ -109,6 +111,16 @@ const RiderDashboard = () => {
 
       setAvailableOrders(available || []);
 
+      // Fetch cancelled orders assigned to this rider
+      const { data: cancelled } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("rider_id", user?.id)
+        .eq("order_status", "cancelled")
+        .order("updated_at", { ascending: false });
+
+      setCancelledOrders(cancelled || []);
+
       // Fetch active order
       const { data: active } = await supabase
         .from("orders")
@@ -162,16 +174,56 @@ const RiderDashboard = () => {
 
   const updateOrderStatus = async (status: string) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
       const { error } = await supabase
         .from("orders")
         .update({ order_status: status })
         .eq("id", activeOrder.id);
 
       if (error) throw error;
+
+      // If delivered, update rider earnings
+      if (status === "delivered" && user) {
+        const riderEarnings = activeOrder.total_fare * 0.75;
+        const { error: profileError } = await supabase
+          .from("rider_profiles")
+          .update({
+            earnings: (riderProfile?.earnings || 0) + riderEarnings,
+            total_distance: (riderProfile?.total_distance || 0) + activeOrder.distance
+          })
+          .eq("user_id", user.id);
+
+        if (profileError) {
+          console.error("Failed to update earnings:", profileError);
+        } else {
+          fetchRiderProfile();
+        }
+      }
+
       toast.success("Order status updated!");
       fetchOrders();
     } catch (error: any) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const reclaimCancelledOrder = async (order: any) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          order_status: "pending",
+          rider_id: null,
+          cancellation_reason: null
+        })
+        .eq("id", order.id);
+
+      if (error) throw error;
+      toast.success("Order released back to available orders!");
+      fetchOrders();
+    } catch (error: any) {
+      toast.error("Failed to release order");
     }
   };
 
@@ -310,6 +362,69 @@ const RiderDashboard = () => {
               </div>
             </CardContent>
           </Card>
+        )}
+
+        {/* Cancelled Orders Toggle */}
+        {cancelledOrders.length > 0 && (
+          <div className="mb-8">
+            <Button
+              variant={showCancelled ? "default" : "outline"}
+              onClick={() => setShowCancelled(!showCancelled)}
+              className="mb-4"
+            >
+              {showCancelled ? "Hide" : "Show"} Cancelled Orders ({cancelledOrders.length})
+            </Button>
+
+            {showCancelled && (
+              <div className="grid gap-4">
+                {cancelledOrders.map((order) => (
+                  <Card key={order.id} className="border-destructive/50 bg-destructive/5">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            Order #{order.id.slice(0, 8)}
+                            <Badge variant="destructive">Cancelled</Badge>
+                          </CardTitle>
+                          <CardDescription>
+                            {order.package_weight}kg • {order.vehicle_type}
+                          </CardDescription>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Was worth</p>
+                          <p className="text-xl font-bold text-muted-foreground line-through">
+                            ₹{(order.total_fare * 0.75).toFixed(0)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 mb-4">
+                        <p className="text-sm">
+                          <span className="font-medium">Pickup:</span> {order.pickup_address}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Drop:</span> {order.drop_address}
+                        </p>
+                        {order.cancellation_reason && (
+                          <p className="text-sm text-destructive">
+                            <span className="font-medium">Reason:</span> {order.cancellation_reason.replace(/_/g, ' ')}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => reclaimCancelledOrder(order)}
+                      >
+                        Release Back to Available
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         )}
 
         {/* Available Orders */}
