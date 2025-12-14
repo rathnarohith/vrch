@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { LogOut, Package, TrendingUp, MapPin, Quote } from "lucide-react";
+import { LogOut, Package, TrendingUp, MapPin, Quote, History, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const ridingQuotes = [
@@ -21,10 +21,12 @@ const RiderDashboard = () => {
   const [isOnline, setIsOnline] = useState(false);
   const [availableOrders, setAvailableOrders] = useState<any[]>([]);
   const [cancelledOrders, setCancelledOrders] = useState<any[]>([]);
+  const [completedOrders, setCompletedOrders] = useState<any[]>([]);
   const [activeOrder, setActiveOrder] = useState<any>(null);
   const [riderProfile, setRiderProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showCancelled, setShowCancelled] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [quote] = useState(() => ridingQuotes[Math.floor(Math.random() * ridingQuotes.length)]);
 
   useEffect(() => {
@@ -121,13 +123,23 @@ const RiderDashboard = () => {
 
       setCancelledOrders(cancelled || []);
 
+      // Fetch completed orders (order history)
+      const { data: completed } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("rider_id", user?.id)
+        .eq("order_status", "delivered")
+        .order("updated_at", { ascending: false });
+
+      setCompletedOrders(completed || []);
+
       // Fetch active order
       const { data: active } = await supabase
         .from("orders")
         .select("*")
         .eq("rider_id", user?.id)
         .in("order_status", ["rider-assigned", "picked-up", "in-transit"])
-        .single();
+        .maybeSingle();
 
       setActiveOrder(active);
     } catch (error: any) {
@@ -278,7 +290,7 @@ const RiderDashboard = () => {
 
         {/* Earnings Card */}
         {riderProfile && (
-          <div className="grid md:grid-cols-2 gap-6 mb-8">
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -292,6 +304,23 @@ const RiderDashboard = () => {
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   Distance: {riderProfile.total_distance}km
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-primary" />
+                  Deliveries
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                  {completedOrders.length}
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Completed orders
                 </p>
               </CardContent>
             </Card>
@@ -429,7 +458,7 @@ const RiderDashboard = () => {
 
         {/* Available Orders */}
         {isOnline && !activeOrder && (
-          <div>
+          <div className="mb-8">
             <h2 className="text-2xl font-bold mb-6">Available Orders</h2>
             {availableOrders.length === 0 ? (
               <Card>
@@ -481,6 +510,75 @@ const RiderDashboard = () => {
             )}
           </div>
         )}
+
+        {/* Order History */}
+        <div className="mb-8">
+          <Button
+            variant={showHistory ? "default" : "outline"}
+            onClick={() => setShowHistory(!showHistory)}
+            className="mb-4"
+          >
+            <History className="w-4 h-4 mr-2" />
+            {showHistory ? "Hide" : "Show"} Order History ({completedOrders.length})
+          </Button>
+
+          {showHistory && (
+            <div className="grid gap-4">
+              {completedOrders.length === 0 ? (
+                <Card>
+                  <CardContent className="py-12 text-center">
+                    <History className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                    <h3 className="text-xl font-semibold mb-2">No completed deliveries yet</h3>
+                    <p className="text-muted-foreground">Start accepting orders to build your history</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                completedOrders.map((order) => (
+                  <Card key={order.id} className="border-success/30 bg-success/5">
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="flex items-center gap-2">
+                            Order #{order.id.slice(0, 8)}
+                            <Badge className="bg-success text-success-foreground">Delivered</Badge>
+                          </CardTitle>
+                          <CardDescription>
+                            {order.package_weight}kg • {order.vehicle_type} • {order.distance}km
+                          </CardDescription>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-muted-foreground">Earned</p>
+                          <p className="text-xl font-bold text-success">
+                            ₹{(order.total_fare * 0.75).toFixed(0)}
+                          </p>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <span className="font-medium">Pickup:</span> {order.pickup_address}
+                        </p>
+                        <p className="text-sm">
+                          <span className="font-medium">Drop:</span> {order.drop_address}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-2">
+                          Delivered on {new Date(order.updated_at).toLocaleDateString('en-IN', {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+        </div>
       </main>
     </div>
   );
