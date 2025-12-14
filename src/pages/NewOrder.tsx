@@ -66,20 +66,11 @@ const NewOrder = () => {
     const weight = parseFloat(formData.packageWeight);
     const distance = 5; // Mock distance for now
     
-    let weightCost = 0;
-    let distanceCost = 0;
+    // New pricing: ₹35 for first km + ₹7 for each additional km
+    const distanceCost = distance <= 1 ? 35 : 35 + (distance - 1) * 7;
 
-    if (formData.vehicleType === "bike") {
-      weightCost = weight <= 5 ? 5 : 5 + (weight - 5) * 3;
-      distanceCost = distance <= 5 ? 20 : 20 + (distance - 5) * 15;
-    } else {
-      weightCost = weight <= 10 ? 15 : 15 + (weight - 10) * 8;
-      distanceCost = distance * 20;
-    }
-
-    const total = weightCost + distanceCost;
+    const total = distanceCost;
     setFareEstimate({
-      weightCost,
       distanceCost,
       total,
       distance,
@@ -292,10 +283,6 @@ const NewOrder = () => {
 
               {fareEstimate && (
                 <div className="p-4 bg-muted rounded-lg space-y-2">
-                  <div className="flex justify-between">
-                    <span>Weight Charge:</span>
-                    <span className="font-semibold">₹{fareEstimate.weightCost}</span>
-                  </div>
                   <div className="flex justify-between">
                     <span>Distance Charge ({fareEstimate.distance}km):</span>
                     <span className="font-semibold">₹{fareEstimate.distanceCost}</span>
